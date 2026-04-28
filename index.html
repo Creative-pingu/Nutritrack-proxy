@@ -5,70 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>NutriTrack Test</title>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; }
-        #root { padding: 20px; font-family: sans-serif; }
-        #status { color: #64748b; font-size: 14px; margin-top: 10px; }
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; font-family: sans-serif; }
+        #root { padding: 20px; }
     </style>
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18",
-            "react-dom": "https://esm.sh/react-dom@18",
-            "react-dom/client": "https://esm.sh/react-dom@18/client",
-            "lucide-react": "https://esm.sh/lucide-react"
-        }
-    }
-    </script>
+
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <script>
+        // window.storage shim
         window.storage = {
             get: async (k) => ({ value: localStorage.getItem(k) }),
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
+        
+        // Mock the "lucide-react" imports that the JSX expects
+        // This maps the icons used in the app to the global Lucide library
+        window['lucide-react'] = window.lucide;
     </script>
 </head>
 <body>
-    <div id="root">
-        <div id="status">Initializing harness...</div>
-    </div>
+    <div id="root">If you see this, the app is still loading or Babel is processing...</div>
+
+    <script type="text/babel" data-presets="react,env" src="./NutriTrack.jsx"></script>
 
     <script type="text/babel" data-presets="react,env">
-        import React from "react";
-        import { createRoot } from "react-dom/client";
-
-        async function init() {
-            const status = document.getElementById("status");
-            try {
-                status.innerText = "Fetching NutriTrack.jsx...";
-                const resp = await fetch('./NutriTrack.jsx?v=' + Date.now());
-                
-                if (!resp.ok) throw new Error("Could not find NutriTrack.jsx on server");
-                
-                const code = await resp.text();
-                
-                status.innerText = "Transforming JSX (this takes a moment)...";
-                const transformed = Babel.transform(code, { 
-                    presets: ['react', 'env'] 
-                }).code;
-                
-                status.innerText = "Mounting App...";
-                // We wrap the code to ensure NutriTrack is available globally
-                const wrappedCode = transformed + "\nwindow.NutriTrackComponent = NutriTrack;";
-                eval(wrappedCode);
-
-                if (!window.NutriTrackComponent) throw new Error("Component not defined in file");
-
-                const root = createRoot(document.getElementById("root"));
-                root.render(<window.NutriTrackComponent />);
-            } catch (e) {
-                status.style.color = "#ff6b6b";
-                status.innerText = "Error: " + e.message;
-                console.error(e);
+        // This second script waits for the first one to finish
+        window.addEventListener('load', () => {
+            if (window.NutriTrack) {
+                const root = ReactDOM.createRoot(document.getElementById("root"));
+                root.render(<window.NutriTrack />);
             }
-        }
-
-        init();
+        });
     </script>
 </body>
 </html>
