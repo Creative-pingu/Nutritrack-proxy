@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>NutriTrack Test</title>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; overflow-x: hidden; }
-        #root { height: 100%; }
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; }
+        #root { padding: 20px; font-family: sans-serif; }
+        #status { color: #64748b; font-size: 14px; margin-top: 10px; }
     </style>
     <script type="importmap">
     {
@@ -28,31 +29,42 @@
     </script>
 </head>
 <body>
-    <div id="root">Loading NutriTrack...</div>
+    <div id="root">
+        <div id="status">Initializing harness...</div>
+    </div>
+
     <script type="text/babel" data-presets="react,env">
         import React from "react";
         import { createRoot } from "react-dom/client";
 
         async function init() {
+            const status = document.getElementById("status");
             try {
-                // Fetch the JSX code directly
-                const response = await fetch('./NutriTrack.jsx');
-                const code = await response.text();
+                status.innerText = "Fetching NutriTrack.jsx...";
+                const resp = await fetch('./NutriTrack.jsx?v=' + Date.now());
                 
-                // Transform and execute the code. 
-                // This makes 'NutriTrack' available in this scope.
+                if (!resp.ok) throw new Error("Could not find NutriTrack.jsx on server");
+                
+                const code = await resp.text();
+                
+                status.innerText = "Transforming JSX (this takes a moment)...";
                 const transformed = Babel.transform(code, { 
                     presets: ['react', 'env'] 
                 }).code;
                 
-                // Execute the code to define the component
-                eval(transformed);
+                status.innerText = "Mounting App...";
+                // We wrap the code to ensure NutriTrack is available globally
+                const wrappedCode = transformed + "\nwindow.NutriTrackComponent = NutriTrack;";
+                eval(wrappedCode);
 
-                // Render it (NutriTrack is now defined by the eval)
+                if (!window.NutriTrackComponent) throw new Error("Component not defined in file");
+
                 const root = createRoot(document.getElementById("root"));
-                root.render(<NutriTrack />);
+                root.render(<window.NutriTrackComponent />);
             } catch (e) {
-                alert("Harness Error: " + e.message);
+                status.style.color = "#ff6b6b";
+                status.innerText = "Error: " + e.message;
+                console.error(e);
             }
         }
 
