@@ -1,5 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-
 const FOOD_DB = [
 { id:"oats",           name:"Oats (rolled)",           cat:"Grains",       cal:389, pro:16.9, carb:66.3, fat:6.9,  fib:10.6, fibSol:5.8,  fibInsol:4.8,  fatSat:1.2,  fatMufa:2.2,  fatPufa:2.5,  aaHis:0.43, aaIle:0.54, aaLeu:1.28, aaLys:0.70, aaMet:0.31, aaPhe:0.90, aaThr:0.57, aaTrp:0.19, aaVal:0.94, iron:4.7,  calc:54,  zinc:4.0, b12:0,    vitD:0,   omega3:0.11, iod:0,  sel:28.9, mag:177, pot:429,  fol:56  },
 { id:"rice_brown",     name:"Brown Rice (cooked)",      cat:"Grains",       cal:123, pro:2.7,  carb:25.6, fat:0.9,  fib:1.6,  fibSol:0.2,  fibInsol:1.4,  fatSat:0.2,  fatMufa:0.3,  fatPufa:0.3,  aaHis:0.08, aaIle:0.11, aaLeu:0.22, aaLys:0.10, aaMet:0.07, aaPhe:0.14, aaThr:0.10, aaTrp:0.03, aaVal:0.17, iron:0.4,  calc:10,  zinc:0.6, b12:0,    vitD:0,   omega3:0.02, iod:0,  sel:9.8,  mag:44,  pot:79,   fol:9   },
