@@ -3,16 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Debug</title>
-    <script>
-        // Catch early load errors and show them as a popup on your iPad
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            alert("Error: " + msg + "\nScript: " + url + "\nLine: " + lineNo);
-            return false;
-        };
-    </script>
+    <title>NutriTrack Test</title>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; }
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; overflow-x: hidden; }
         #root { height: 100%; }
     </style>
     <script type="importmap">
@@ -26,20 +19,44 @@
     }
     </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        window.storage = {
+            get: async (k) => ({ value: localStorage.getItem(k) }),
+            set: async (k, v) => { localStorage.setItem(k, v); return v; },
+            delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
+        };
+    </script>
 </head>
 <body>
-    <div id="root">Loading NutriTrack... (If this stays, check alerts)</div>
-    <script type="text/babel" data-type="module" data-presets="react,env">
+    <div id="root">Loading NutriTrack...</div>
+    <script type="text/babel" data-presets="react,env">
         import React from "react";
         import { createRoot } from "react-dom/client";
-        import NutriTrack from "./NutriTrack.jsx";
 
-        try {
-            const root = createRoot(document.getElementById("root"));
-            root.render(<NutriTrack />);
-        } catch (e) {
-            alert("Render Error: " + e.message);
+        async function init() {
+            try {
+                // Fetch the JSX code directly
+                const response = await fetch('./NutriTrack.jsx');
+                const code = await response.text();
+                
+                // Transform and execute the code. 
+                // This makes 'NutriTrack' available in this scope.
+                const transformed = Babel.transform(code, { 
+                    presets: ['react', 'env'] 
+                }).code;
+                
+                // Execute the code to define the component
+                eval(transformed);
+
+                // Render it (NutriTrack is now defined by the eval)
+                const root = createRoot(document.getElementById("root"));
+                root.render(<NutriTrack />);
+            } catch (e) {
+                alert("Harness Error: " + e.message);
+            }
         }
+
+        init();
     </script>
 </body>
 </html>
