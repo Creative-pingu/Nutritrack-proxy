@@ -1,61 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Sync Test</title>
-    <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: -apple-system, sans-serif; }
-        #root { height: 100%; }
-        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; }
-    </style>
+try {
+    const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
+    const code = await response.text();
 
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@0.344.0"></script>
+    const transformed = Babel.transform(code, { 
+        presets: [['env', { modules: false }], 'react'] 
+    }).code;
+    
+    eval(transformed);
 
-    <script>
-        window.storage = {
-            get: async (k) => ({ value: localStorage.getItem(k) }),
-            set: async (k, v) => { localStorage.setItem(k, v); return v; },
-            delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
-        };
-        window['lucide-react'] = window.lucide;
-    </script>
-</head>
-<body>
-    <div id="root"><div id="loader">Finalizing...</div></div>
-
-    <script type="text/babel">
-        async function startApp() {
-            const loader = document.getElementById('loader');
-            try {
-                const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
-                const code = await response.text();
-
-                // Transform without the module wrapper that causes the 'exports' error
-                const transformed = Babel.transform(code, { 
-                    presets: [
-                        ['env', { modules: false }], 
-                        'react'
-                    ] 
-                }).code;
-                
-                eval(transformed);
-
-                if (window.NutriTrack) {
-                    const root = ReactDOM.createRoot(document.getElementById("root"));
-                    root.render(React.createElement(window.NutriTrack));
-                } else {
-                    throw new Error("window.NutriTrack not found. Ensure 'window.NutriTrack = NutriTrack;' is at the very bottom of your JSX file.");
-                }
-
-            } catch (e) {
-                loader.innerHTML = '<div style="color:#ff6b6b">Error: ' + e.message + '</div>';
-            }
-        }
-        startApp();
-    </script>
-</body>
-</html>
+    if (window.NutriTrack) {
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        // This is the safest way to render on mobile
+        root.render(React.createElement(window.NutriTrack));
+    }
+} catch (e) {
+    // This will print the EXACT error on your iPhone screen
+    document.getElementById('root').innerHTML = `
+        <div style="padding:20px; color:#ff6b6b; background:#1a1a1a; height:100vh;">
+            <h3 style="margin:0">Render Crash:</h3>
+            <pre style="white-space:pre-wrap; font-size:12px;">${e.stack || e.message}</pre>
+        </div>
+    `;
+}
