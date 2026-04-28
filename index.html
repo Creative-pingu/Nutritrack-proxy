@@ -21,34 +21,34 @@
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
-        // Fix for Lucide icons
         window['lucide-react'] = window.lucide;
     </script>
 </head>
 <body>
-    <div id="root"><div id="loader">Loading NutriTrack...</div></div>
+    <div id="root"><div id="loader">Finalizing...</div></div>
 
-    <script type="text/babel" data-presets="react,env">
+    <script type="text/babel">
         async function startApp() {
             const loader = document.getElementById('loader');
             try {
-                // Fetch latest version
                 const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
                 const code = await response.text();
 
-                // Transform and Execute
+                // Transform without the module wrapper that causes the 'exports' error
                 const transformed = Babel.transform(code, { 
-                    presets: ['react', 'env'] 
+                    presets: [
+                        ['env', { modules: false }], 
+                        'react'
+                    ] 
                 }).code;
                 
                 eval(transformed);
 
-                // Render using the global component
                 if (window.NutriTrack) {
                     const root = ReactDOM.createRoot(document.getElementById("root"));
                     root.render(React.createElement(window.NutriTrack));
                 } else {
-                    throw new Error("window.NutriTrack not found. Did you add 'window.NutriTrack = NutriTrack;' to the end of the JSX?");
+                    throw new Error("window.NutriTrack not found. Ensure 'window.NutriTrack = NutriTrack;' is at the very bottom of your JSX file.");
                 }
 
             } catch (e) {
