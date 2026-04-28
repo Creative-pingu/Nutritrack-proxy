@@ -358,7 +358,7 @@ onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 }
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────
-export default function NutriTrack() {
+function NutriTrack() {
 const [view,            setView]            = useState("log");
 const [logs,            setLogs]            = useState({});
 const [goals,           setGoals]           = useState(DEFAULT_GOALS);
