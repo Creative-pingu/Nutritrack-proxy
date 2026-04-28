@@ -2299,3 +2299,5 @@ return (
 
 return null;
 }
+
+window.NutriTrack = NutriTrack;
