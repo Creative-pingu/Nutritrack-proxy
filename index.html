@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>NutriTrack (Test Harness)</title>
+    <style>
+        /* Prevents white flash and sets core theme */
+        html, body { 
+            margin: 0; 
+            padding: 0;
+            background: #0a0f1a; 
+            color: #e2e8f0;
+            font-family: 'DM Sans', system-ui, sans-serif; 
+            min-height: 100vh;
+        }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18",
+            "react-dom": "https://esm.sh/react-dom@18",
+            "react-dom/client": "https://esm.sh/react-dom@18/client",
+            "lucide-react": "https://esm.sh/lucide-react"
+        }
+    }
+    </script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        /**
+         * window.storage Shim
+         * Mimics the Claude Artifact runtime API using localStorage.
+         */
+        window.storage = {
+            get: async (key) => {
+                const val = localStorage.getItem(key);
+                return val !== null ? { value: val } : null;
+            },
+            set: async (key, value) => {
+                localStorage.setItem(key, value);
+                return value;
+            },
+            delete: async (key) => {
+                localStorage.removeItem(key);
+                return { deleted: true };
+            }
+        };
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module" data-presets="react">
+        import React from 'react';
+        import { createRoot } from 'react-dom/client';
+        import NutriTrack from './NutriTrack.jsx';
+
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(<NutriTrack />);
+    </script>
+</body>
+</html>
