@@ -5,63 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>NutriTrack Sync Test</title>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: sans-serif; }
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: -apple-system, sans-serif; }
         #root { height: 100%; }
-        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; white-space: pre-wrap; }
+        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; }
     </style>
 
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@0.344.0"></script>
 
     <script>
-        // Storage Shim
         window.storage = {
             get: async (k) => ({ value: localStorage.getItem(k) }),
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
-        // Fix for Lucide icons in UMD mode
+        // Fix for Lucide icons
         window['lucide-react'] = window.lucide;
     </script>
 </head>
 <body>
-    <div id="root"><div id="loader">Fetching JSX...</div></div>
+    <div id="root"><div id="loader">Loading NutriTrack...</div></div>
 
     <script type="text/babel" data-presets="react,env">
         async function startApp() {
             const loader = document.getElementById('loader');
             try {
+                // Fetch latest version
                 const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
-                let code = await response.text();
+                const code = await response.text();
 
-                loader.innerText = "Transforming code...";
-                
-                // 1. Strip imports so they don't crash the browser
-                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
-
-                // 2. Transform JSX to JS
+                // Transform and Execute
                 const transformed = Babel.transform(code, { 
                     presets: ['react', 'env'] 
                 }).code;
-
-                // 3. Execute
+                
                 eval(transformed);
 
-                loader.innerText = "Mounting...";
-
-                // 4. THE FIX: Explicitly use window.ReactDOM.createRoot
+                // Render using the global component
                 if (window.NutriTrack) {
-                    const root = window.ReactDOM.createRoot(document.getElementById("root"));
-                    root.render(window.React.createElement(window.NutriTrack));
+                    const root = ReactDOM.createRoot(document.getElementById("root"));
+                    root.render(React.createElement(window.NutriTrack));
                 } else {
-                    throw new Error("NutriTrack component not found in file. Ensure 'window.NutriTrack = NutriTrack;' is at the bottom.");
+                    throw new Error("window.NutriTrack not found. Did you add 'window.NutriTrack = NutriTrack;' to the end of the JSX?");
                 }
 
             } catch (e) {
-                loader.innerHTML = '<span style="color:#ff6b6b">Error: ' + e.message + '</span>';
-                console.error(e);
+                loader.innerHTML = '<div style="color:#ff6b6b">Error: ' + e.message + '</div>';
             }
         }
         startApp();
