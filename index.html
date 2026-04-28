@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Test</title>
+    <title>NutriTrack Sync Test</title>
     <style>
         html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: sans-serif; }
         #root { height: 100%; }
-        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; }
+        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; white-space: pre-wrap; }
     </style>
 
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.344.0"></script>
 
     <script>
         // Storage Shim
@@ -22,12 +22,12 @@
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
-        // Mock lucide-react for the JSX logic
+        // Fix for Lucide icons in UMD mode
         window['lucide-react'] = window.lucide;
     </script>
 </head>
 <body>
-    <div id="root"><div id="loader">Syncing with GitHub...</div></div>
+    <div id="root"><div id="loader">Fetching JSX...</div></div>
 
     <script type="text/babel" data-presets="react,env">
         async function startApp() {
@@ -36,18 +36,32 @@
                 const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
                 let code = await response.text();
 
-                // iPhone Fix: Comment out the import lines so Babel doesn't trip
-                code = code.replace(/import/g, '// import');
+                loader.innerText = "Transforming code...";
+                
+                // 1. Strip imports so they don't crash the browser
+                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
 
-                // Transform and Define
-                const transformed = Babel.transform(code, { presets: ['react', 'env'] }).code;
+                // 2. Transform JSX to JS
+                const transformed = Babel.transform(code, { 
+                    presets: ['react', 'env'] 
+                }).code;
+
+                // 3. Execute
                 eval(transformed);
 
-                // Render
-                const root = ReactDOM.createRoot(document.getElementById("root"));
-                root.render(<NutriTrack />);
+                loader.innerText = "Mounting...";
+
+                // 4. THE FIX: Explicitly use window.ReactDOM.createRoot
+                if (window.NutriTrack) {
+                    const root = window.ReactDOM.createRoot(document.getElementById("root"));
+                    root.render(window.React.createElement(window.NutriTrack));
+                } else {
+                    throw new Error("NutriTrack component not found in file. Ensure 'window.NutriTrack = NutriTrack;' is at the bottom.");
+                }
+
             } catch (e) {
-                loader.innerHTML = '<span style="color:red">Error: ' + e.message + '</span>';
+                loader.innerHTML = '<span style="color:#ff6b6b">Error: ' + e.message + '</span>';
+                console.error(e);
             }
         }
         startApp();
