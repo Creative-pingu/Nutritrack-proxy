@@ -3,12 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack (test)</title>
+    <title>NutriTrack Debug</title>
+    <script>
+        // Catch early load errors and show them as a popup on your iPad
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            alert("Error: " + msg + "\nScript: " + url + "\nLine: " + lineNo);
+            return false;
+        };
+    </script>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: #e2e8f0; font-family: sans-serif; }
-        #error-display { color: #ff6b6b; padding: 20px; font-family: monospace; white-space: pre-wrap; display: none; }
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100%; }
+        #root { height: 100%; }
     </style>
-
     <script type="importmap">
     {
         "imports": {
@@ -19,51 +25,20 @@
         }
     }
     </script>
-
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <script>
-        [span_4](start_span)// window.storage shim[span_4](end_span)
-        window.storage = {
-            get: async (key) => {
-                const v = localStorage.getItem(key);
-                return v !== null ? { value: v } : null;
-            },
-            set: async (key, value) => {
-                localStorage.setItem(key, value);
-                return value;
-            },
-            delete: async (key) => {
-                localStorage.removeItem(key);
-                return { deleted: true };
-            }
-        };
-
-        [span_5](start_span)// Error helper for mobile debugging[span_5](end_span)
-        window.reportError = function(err) {
-            const display = document.getElementById('error-display');
-            display.style.display = 'block';
-            display.innerHTML += '\n' + err;
-        };
-    </script>
 </head>
 <body>
-    <div id="error-display"><strong>Harness Error:</strong></div>
-    <div id="root"></div>
-
+    <div id="root">Loading NutriTrack... (If this stays, check alerts)</div>
     <script type="text/babel" data-type="module" data-presets="react,env">
         import React from "react";
         import { createRoot } from "react-dom/client";
-        
-        // IMPORTANT: Ensure your file in GitHub is exactly "NutriTrack.jsx"
-        [span_6](start_span)// If it is named "NutriTrack 3.jsx", this import will fail.[span_6](end_span)
         import NutriTrack from "./NutriTrack.jsx";
 
         try {
             const root = createRoot(document.getElementById("root"));
             root.render(<NutriTrack />);
         } catch (e) {
-            window.reportError(e.message);
+            alert("Render Error: " + e.message);
         }
     </script>
 </body>
