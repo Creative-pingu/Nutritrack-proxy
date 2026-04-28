@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Sync Test</title>
+    <title>NutriTrack Test</title>
     <style>
         html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: sans-serif; }
         #root { height: 100%; }
-        .log { padding: 20px; color: #64748b; font-size: 12px; font-family: monospace; }
+        #loader { padding: 20px; color: #64748b; font-size: 14px; font-family: monospace; }
     </style>
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -16,33 +16,41 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
-        // Mock Storage
+        // Storage Shim
         window.storage = {
             get: async (k) => ({ value: localStorage.getItem(k) }),
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
-        // Mock lucide-react for the JSX
+        // Mock lucide-react for the JSX logic
         window['lucide-react'] = window.lucide;
     </script>
 </head>
 <body>
-    <div id="root">
-        <div id="status" class="log">Waiting for Babel...</div>
-    </div>
+    <div id="root"><div id="loader">Syncing with GitHub...</div></div>
 
     <script type="text/babel" data-presets="react,env">
-        /**
-         * 1. PASTE YOUR SLIMMED-DOWN NutriTrack.jsx HERE
-         * 2. REMOVE the "import" lines from the very top.
-         * 3. REMOVE the "export default" from the very bottom.
-         */
+        async function startApp() {
+            const loader = document.getElementById('loader');
+            try {
+                const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
+                let code = await response.text();
 
-        // [PASTE SLIM VERSION HERE]
+                // iPhone Fix: Comment out the import lines so Babel doesn't trip
+                code = code.replace(/import/g, '// import');
 
-        // Explicitly render
-        const root = ReactDOM.createRoot(document.getElementById("root"));
-        root.render(<NutriTrack />);
+                // Transform and Define
+                const transformed = Babel.transform(code, { presets: ['react', 'env'] }).code;
+                eval(transformed);
+
+                // Render
+                const root = ReactDOM.createRoot(document.getElementById("root"));
+                root.render(<NutriTrack />);
+            } catch (e) {
+                loader.innerHTML = '<span style="color:red">Error: ' + e.message + '</span>';
+            }
+        }
+        startApp();
     </script>
 </body>
 </html>
