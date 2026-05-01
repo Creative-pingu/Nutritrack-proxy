@@ -2,29 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Original Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <title>NutriTrack</title>
     <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: -apple-system, sans-serif; }
-        #root { height: 100%; }
-        #debug-log { position: fixed; bottom: 0; width: 100%; max-height: 20%; background: rgba(0,0,0,0.8); font-size: 10px; overflow-y: auto; padding: 10px; z-index: 1000; border-top: 1px solid #334155; }
+        /* Ensure the app takes up the full mobile viewport */
+        html, body { 
+            margin: 0; 
+            padding: 0;
+            background: #0a0f1a; 
+            color: white; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+        #root { height: 100%; width: 100%; }
+        #loading-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            font-size: 14px;
+        }
     </style>
 
-    <!-- 1. Load Babel & React First -->
+    <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@0.344.0"></script>
 
     <script>
-        // Emergency Shims for your original file's imports
+        // Global Shims for the original JSX
         window.useState = React.useState;
         window.useEffect = React.useEffect;
         window.useMemo = React.useMemo;
         window.useCallback = React.useCallback;
         window.useRef = React.useRef;
         
-        // Map Lucide icons so the original file finds them globally
         if (window.lucide) {
             Object.assign(window, window.lucide);
             window['lucide-react'] = window.lucide;
@@ -35,52 +51,43 @@
             set: async (k, v) => { localStorage.setItem(k, v); return v; },
             delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
         };
-
-        function log(msg) {
-            const l = document.getElementById('debug-log');
-            if(l) l.innerHTML += `<div>${msg}</div>`;
-            console.log(msg);
-        }
     </script>
 </head>
 <body>
-    <div id="root"><div style="padding:20px;">Loading Original JSX...</div></div>
-    <div id="debug-log"></div>
+    <div id="root">
+        <div id="loading-screen">Launching NutriTrack...</div>
+    </div>
 
-    <script type="text/babel" data-type="module">
-        /**
-         * THIS IS THE MAGIC: 
-         * We fetch your ORIGINAL file and tell Babel it's a module.
-         */
+    <script type="text/babel">
         async function loadApp() {
             try {
-                log("Fetching original NutriTrack.jsx...");
+                // Fetch the original JSX file
                 const res = await fetch('./NutriTrack.jsx?v=' + Date.now());
                 let code = await res.text();
 
-                log("Adapting file for iPhone...");
-                // Just one small tweak: remove actual 'import' lines 
-                // because the browser can't resolve them yet.
-                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Module import');
-                
-                // Allow the 'export default' to work by making it a variable
+                // Automagically adapt the file for the browser environment
+                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
                 code = code.replace(/export\s+default/g, 'window._MainApp = ');
 
-                log("Compiling (this takes 3-5 seconds on iPhone)...");
+                // Transform JSX to JS
                 const transformed = Babel.transform(code, { 
                     presets: ['react', ['env', { modules: false }]] 
                 }).code;
 
                 eval(transformed);
 
-                log("Mounting...");
-                const App = window._MainApp || NutriTrack;
-                const root = ReactDOM.createRoot(document.getElementById("root"));
-                root.render(React.createElement(App));
+                // Render the app
+                const App = window._MainApp || (typeof NutriTrack !== 'undefined' ? NutriTrack : null);
                 
-                log("Success!");
+                if (App) {
+                    const root = ReactDOM.createRoot(document.getElementById("root"));
+                    root.render(React.createElement(App));
+                } else {
+                    document.getElementById('root').innerHTML = '<div style="padding:20px; color:red;">Error: NutriTrack component not found.</div>';
+                }
             } catch (e) {
-                log("<span style='color:red'>Crash: " + e.message + "</span>");
+                console.error(e);
+                document.getElementById('root').innerHTML = `<div style="padding:20px; color:red;">Crash: ${e.message}</div>`;
             }
         }
         loadApp();
