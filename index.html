@@ -1,17 +1,17 @@
 <script>
-    // ... your existing storage shim ...
+    window.storage = {
+        get: async (k) => { return { value: localStorage.getItem(k) }; },
+        set: async (k, v) => { localStorage.setItem(k, v); return v; },
+        delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
+    };
 
-    // THE FIX: Inject React hooks into the global scope
-    // This allows your JSX to work even after the 'import' lines are stripped
+    // Inject React hooks globally so the stripped JSX can find them
     if (window.React) {
-        window.useState = React.useState;
-        window.useEffect = React.useEffect;
-        window.useRef = React.useRef;
-        window.useCallback = React.useCallback;
-        window.useMemo = React.useMemo;
+        const hooks = ['useState', 'useEffect', 'useRef', 'useCallback', 'useMemo'];
+        hooks.forEach(hook => window[hook] = window.React[hook]);
     }
-
-    // Existing Lucide fix
+    
+    // Inject Lucide icons globally
     if (window.lucide) { 
         Object.assign(window, window.lucide); 
         window['lucide-react'] = window.lucide; 
