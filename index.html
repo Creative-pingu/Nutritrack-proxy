@@ -1,99 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>NutriTrack Diagnostics</title>
-    <style>
-        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: -apple-system, sans-serif; }
-        #root { height: 100%; }
-        #debug-console { 
-            position: fixed; bottom: 0; left: 0; right: 0; max-height: 30%; 
-            background: rgba(0,0,0,0.8); font-size: 10px; font-family: monospace; 
-            overflow-y: auto; padding: 10px; border-top: 1px solid #334155; z-index: 9999;
-        }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #1e293b; padding-bottom: 2px; }
-    </style>
+<script>
+    // ... your existing storage shim ...
 
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@0.344.0"></script>
+    // THE FIX: Inject React hooks into the global scope
+    // This allows your JSX to work even after the 'import' lines are stripped
+    if (window.React) {
+        window.useState = React.useState;
+        window.useEffect = React.useEffect;
+        window.useRef = React.useRef;
+        window.useCallback = React.useCallback;
+        window.useMemo = React.useMemo;
+    }
 
-    <script>
-        // On-screen console for iPhone
-        window.logToScreen = (msg, type = 'info') => {
-            const consoleEl = document.getElementById('debug-console');
-            if (!consoleEl) return;
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.style.color = type === 'error' ? '#ef4444' : '#10b981';
-            entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            consoleEl.appendChild(entry);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-        };
-
-        window.storage = {
-            get: async (k) => { logToScreen(`Storage GET: ${k}`); return { value: localStorage.getItem(k) }; },
-            set: async (k, v) => { logToScreen(`Storage SET: ${k}`); localStorage.setItem(k, v); return v; },
-            delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
-        };
-        
-        if (window.lucide) { Object.assign(window, window.lucide); window['lucide-react'] = window.lucide; }
-        
-        window.onerror = (m) => logToScreen("Global Error: " + m, 'error');
-    </script>
-</head>
-<body>
-    <div id="root"><div style="padding:20px; color:#64748b;">Loading System...</div></div>
-    <div id="debug-console"><div>-- System Logs --</div></div>
-
-    <script type="text/babel">
-        // Basic Error Boundary to catch React-specific crashes
-        class ErrorBoundary extends React.Component {
-            state = { err: null };
-            static getDerivedStateFromError(error) { return { err: error }; }
-            componentDidCatch(error) { window.logToScreen("React Crash: " + error.message, 'error'); }
-            render() {
-                if (this.state.err) return <div style={{padding:20, color:'#ef4444'}}>UI Crash: {this.state.err.message}</div>;
-                return this.props.children;
-            }
-        }
-
-        async function startApp() {
-            try {
-                window.logToScreen("Fetching JSX...");
-                const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
-                let code = await response.text();
-
-                window.logToScreen("Cleaning & Transforming...");
-                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
-                code = code.replace(/export\s+default\s+function/g, 'function');
-                code = code.replace(/export\s+default\s+NutriTrack;/g, '');
-
-                const transformed = Babel.transform(code, { presets: [['env', { modules: false }], 'react'] }).code;
-                
-                window.logToScreen("Executing Code...");
-                eval(transformed);
-
-                const Component = window.NutriTrack || (typeof NutriTrack !== 'undefined' ? NutriTrack : null);
-
-                if (Component) {
-                    window.logToScreen("Mounting UI...");
-                    const root = ReactDOM.createRoot(document.getElementById("root"));
-                    root.render(
-                        <ErrorBoundary>
-                            <Component />
-                        </ErrorBoundary>
-                    );
-                } else {
-                    throw new Error("NutriTrack component not found.");
-                }
-            } catch (e) {
-                window.logToScreen("Fatal: " + e.message, 'error');
-            }
-        }
-        startApp();
-    </script>
-</body>
-</html>
+    // Existing Lucide fix
+    if (window.lucide) { 
+        Object.assign(window, window.lucide); 
+        window['lucide-react'] = window.lucide; 
+    }
+</script>
