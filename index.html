@@ -2,39 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>NutriTrack</title>
     <style>
-        /* Ensure the app takes up the full mobile viewport */
+        /* Restore scrolling and touch interaction */
         html, body { 
             margin: 0; 
             padding: 0;
             background: #0a0f1a; 
             color: white; 
-            height: 100vh; 
-            width: 100vw;
-            overflow: hidden;
+            /* min-height instead of fixed height allows natural scrolling */
+            min-height: 100%;
+            width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            /* Removes the grey flicker when tapping buttons on iOS */
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        #root { height: 100%; width: 100%; }
+
+        #root { 
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         #loading-screen {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0a0f1a;
+            z-index: 9999;
             color: #64748b;
-            font-size: 14px;
         }
     </style>
 
-    <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@0.344.0"></script>
 
     <script>
-        // Global Shims for the original JSX
+        // Injection of dependencies
         window.useState = React.useState;
         window.useEffect = React.useEffect;
         window.useMemo = React.useMemo;
@@ -61,33 +73,29 @@
     <script type="text/babel">
         async function loadApp() {
             try {
-                // Fetch the original JSX file
                 const res = await fetch('./NutriTrack.jsx?v=' + Date.now());
                 let code = await res.text();
 
-                // Automagically adapt the file for the browser environment
-                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
+                // Clean for browser execution
+                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped');
                 code = code.replace(/export\s+default/g, 'window._MainApp = ');
 
-                // Transform JSX to JS
                 const transformed = Babel.transform(code, { 
                     presets: ['react', ['env', { modules: false }]] 
                 }).code;
 
                 eval(transformed);
 
-                // Render the app
                 const App = window._MainApp || (typeof NutriTrack !== 'undefined' ? NutriTrack : null);
                 
                 if (App) {
                     const root = ReactDOM.createRoot(document.getElementById("root"));
+                    // Clear the loading screen before rendering
+                    document.getElementById('root').innerHTML = '';
                     root.render(React.createElement(App));
-                } else {
-                    document.getElementById('root').innerHTML = '<div style="padding:20px; color:red;">Error: NutriTrack component not found.</div>';
                 }
             } catch (e) {
-                console.error(e);
-                document.getElementById('root').innerHTML = `<div style="padding:20px; color:red;">Crash: ${e.message}</div>`;
+                document.getElementById('root').innerHTML = `<div style="padding:20px; color:red;">${e.message}</div>`;
             }
         }
         loadApp();
