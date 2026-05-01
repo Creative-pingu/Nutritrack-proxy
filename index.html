@@ -1,24 +1,72 @@
-try {
-    const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
-    const code = await response.text();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>NutriTrack Debug</title>
+    <style>
+        html, body { margin: 0; background: #0a0f1a; color: white; height: 100vh; font-family: -apple-system, sans-serif; }
+        #root { height: 100%; }
+        .error-box { padding: 20px; color: #ff6b6b; background: #1a1a1a; height: 100vh; overflow: auto; }
+    </style>
 
-    const transformed = Babel.transform(code, { 
-        presets: [['env', { modules: false }], 'react'] 
-    }).code;
-    
-    eval(transformed);
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.344.0"></script>
 
-    if (window.NutriTrack) {
-        const root = ReactDOM.createRoot(document.getElementById("root"));
-        // This is the safest way to render on mobile
-        root.render(React.createElement(window.NutriTrack));
-    }
-} catch (e) {
-    // This will print the EXACT error on your iPhone screen
-    document.getElementById('root').innerHTML = `
-        <div style="padding:20px; color:#ff6b6b; background:#1a1a1a; height:100vh;">
-            <h3 style="margin:0">Render Crash:</h3>
-            <pre style="white-space:pre-wrap; font-size:12px;">${e.stack || e.message}</pre>
-        </div>
-    `;
-}
+    <script>
+        // 1. Storage Shim
+        window.storage = {
+            get: async (k) => ({ value: localStorage.getItem(k) }),
+            set: async (k, v) => { localStorage.setItem(k, v); return v; },
+            delete: async (k) => { localStorage.removeItem(k); return { deleted: true }; }
+        };
+
+        // 2. THE FIX: Automatically map EVERY Lucide icon to the global scope
+        // This stops the "Activity is not defined" error without you editing the JSX
+        if (window.lucide) {
+            Object.assign(window, window.lucide);
+            window['lucide-react'] = window.lucide;
+        }
+    </script>
+</head>
+<body>
+    <div id="root"><div style="padding:20px; color:#64748b;">Initialising NutriTrack...</div></div>
+
+    <script type="text/babel">
+        async function startApp() {
+            const rootEl = document.getElementById("root");
+            try {
+                const response = await fetch('./NutriTrack.jsx?v=' + Date.now());
+                let code = await response.text();
+
+                // Clean the code for the browser: remove imports and exports
+                code = code.replace(/import\s+[\s\S]+?from\s+['"].+?['"];/g, '// Stripped Import');
+                code = code.replace(/export\s+default\s+function/g, 'function');
+                code = code.replace(/export\s+default\s+NutriTrack;/g, '');
+
+                const transformed = Babel.transform(code, { 
+                    presets: [['env', { modules: false }], 'react'] 
+                }).code;
+                
+                eval(transformed);
+
+                // We expect the function to be called NutriTrack
+                const Component = window.NutriTrack || NutriTrack;
+
+                if (Component) {
+                    const root = ReactDOM.createRoot(rootEl);
+                    root.render(React.createElement(Component));
+                } else {
+                    throw new Error("Could not find the 'NutriTrack' function in the code.");
+                }
+
+            } catch (e) {
+                rootEl.innerHTML = `<div class="error-box"><h3>Render Error</h3><pre>${e.stack || e.message}</pre></div>`;
+            }
+        }
+        startApp();
+    </script>
+</body>
+</html>
