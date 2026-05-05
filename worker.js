@@ -44,8 +44,16 @@ export default {
 
       // Origin gate — sole security check. See header comment for threat model.
       if (!isOriginAllowed(origin, env)) {
-        return jsonResponse({ error: "forbidden", reason: "origin_not_allowed" }, 403, origin, env);
+        return new Response(JSON.stringify({
+          origin_received: origin,
+          allowed_raw: env.ALLOWED_ORIGINS,
+          allowed_split: (env.ALLOWED_ORIGINS || "").split(","),
+        }, null, 2), {
+          status: 403,
+          headers: { "Content-Type": "application/json" }
+        });
       }
+      
 
       const path = new URL(request.url).pathname;
 
