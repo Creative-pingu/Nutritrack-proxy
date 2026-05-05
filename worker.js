@@ -32,10 +32,10 @@ const NOTION_API     = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
 const VERSION        = "0.3.0";
 
-return new Response("NEW VERSION MARKER", { status: 200 });
-
 export default {
   async fetch(request, env) {
+    
+    return new Response("NEW VERSION MARKER", { status: 200 });
     const origin = request.headers.get("Origin") || "";
     console.log("Origin Header:", request.headers.get("Origin"));
     
