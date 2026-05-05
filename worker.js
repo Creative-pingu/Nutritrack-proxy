@@ -32,11 +32,10 @@ const NOTION_API     = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
 const VERSION        = "0.3.0";
 
-console.log("Origin Header:", request.headers.get("Origin"));
-
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
+    console.log("Origin Header:", request.headers.get("Origin"));
     try {
       // CORS preflight — handled before auth so browsers do not choke on it
       if (request.method === "OPTIONS") {
