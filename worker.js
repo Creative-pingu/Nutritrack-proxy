@@ -91,7 +91,7 @@ function isOriginAllowed(origin, env) {
   const list = (env.ALLOWED_ORIGINS || "")
     .split(",").map(s => s.trim()).filter(Boolean);
   if (list.includes("*")) return true;
-  return list.includes(origin);
+  return list.some(allowed => origin === allowed || origin.startsWith(allowed));
 }
 
 function corsHeaders(origin) {
