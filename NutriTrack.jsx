@@ -295,12 +295,26 @@ const STORAGE_KEYS = {
   supplementStacks: "nt-supplement-stacks",
 };
 
+// ── STORAGE ADAPTER (Phase 5.5 fix) ──────────────────────────────────────
+// Previous implementation called window.storage.get / window.storage.set,
+// which is the artifact-runtime proprietary API. That API does not exist on
+// the GitHub Pages harness, so every read silently returned the fallback and
+// every write silently no-op'd. Replaced with standard localStorage. The
+// async signatures are preserved so no call sites need to change.
 async function loadData(key, fallback) {
-  try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : fallback; }
-  catch { return fallback; }
+  try {
+    const raw = localStorage.getItem(key);
+    return raw !== null ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
 }
 async function saveData(key, val) {
-  try { await window.storage.set(key, JSON.stringify(val)); } catch(e) { console.error(e); }
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) {
+    console.error("saveData failed:", key, e);
+  }
 }
 
 function calcRecipeNutritionPerServing(ingredients, servings, allFoods) {
